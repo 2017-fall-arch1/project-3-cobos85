@@ -5,6 +5,10 @@
 
 	.text
 
+	.extern p1collision
+	.extern p2collision
+	.extern fcollision
+
 	.global change_sound
 change_sound:
 	call #p1collision

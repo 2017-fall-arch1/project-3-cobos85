@@ -13,8 +13,11 @@
 #include <p2switches.h>
 #include <shape.h>
 #include <abCircle.h>
+#include "noise.h"
 
 #define GREEN_LED BIT6
+
+int buzzer = 0;
 
 
 AbRect rect10 = {abRectGetBounds, abRectCheck, {10,10}}; /* 10x10 rectangle */
@@ -125,7 +128,7 @@ char score2 = 0;
 /* draws scores on screen */
 void drawScore(char *score, char size)
 {
-  drawStrings5x7(size, 14, score, COLOR_BLACK, COLOR_WHITE);
+  drawString5x7(size, 14, score, COLOR_BLACK, COLOR_WHITE);
 }
 
 
@@ -181,9 +184,9 @@ void p1collision()
 }
 
 /* to detect collision against paddle 2 */
-void p2collison()
+void p2collision()
 {
-  if((layer3.pos.axes[0] + (circle8.radius) >= (layer0.pos.axes[0] - 3)) && layer0.pos.axes[1] -12) && (layer3.pos.axes[1] <= layer0.pos.axes[1] + 12))
+  if((layer3.pos.axes[0] + (circle8.radius) >= (layer0.pos.axes[0] - 3)) && (layer3.pos.axes[1] >= layer0.pos.axes[1] - 12) && (layer3.pos.axes[1] <= layer0.pos.axes[1] + 12))
   {
     layer3.posNext.axes[0] -= 3;
     ml3.velocity.axes[0] = -ml3.velocity.axes[0];
