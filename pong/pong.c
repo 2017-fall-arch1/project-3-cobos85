@@ -168,6 +168,40 @@ void mlAdvance(MovLayer *ml, Region *fence)
   } /**< for ml */
 }
 
+/* switch update for player 1 paddle */
+void p1sw(u_int sw)
+{
+  if(!(sw & (1<<0)))
+    {
+      ml1.velocity.axes[1] = 5;
+    }
+  else if(!(sw & (1<<1)))
+    {
+      ml1.velocity.axes[1] = -5;
+    }
+  else
+    {
+      ml1.velocity.axes[1] = 0;
+    }
+}
+
+/* switch update for player 2 paddle */
+void p2sw(u_int sw)
+{
+  if(!(sw & (1<<2)))
+    {
+      ml0.velocity.axes[1] = 5;
+    }
+  else if(!(sw & (1<<3)))
+    {
+      ml0.velocity.axes[1] = -5;
+    }
+  else
+    {
+      ml0.velocity.axes[1] = 0;
+    }
+}
+
 u_int bgColor = COLOR_WHITE;     /**< The background color */
 int redrawScreen = 1;            /**< Boolean for whether screen needs to be redrawn */
 
