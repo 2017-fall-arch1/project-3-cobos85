@@ -27,11 +27,11 @@ AbRectOutline fieldOutline = {	                         /* playing field */
 
 
 /* ball layer */
-Layer layer3 = {		                         /* Layer with a green circle */
+Layer layer3 = {		                         /* Layer with a white circle */
   (AbShape *)&circle8,
   {(screenWidth/2)+10, (screenHeight/2)+5},              /* bit below & right of center */
   {0,0}, {0,0},				                 /* last & next pos */
-  COLOR_GREEN,
+  COLOR_WHITE,
   0
 };
 
@@ -39,25 +39,25 @@ Layer fieldLayer = {		                         /* playing field as a layer */
   (AbShape *) &fieldOutline,
   {screenWidth/2, screenHeight/2},                       /* center */
   {0,0}, {0,0},				                 /* last & next pos */
-  COLOR_BLACK,
+  COLOR_WHITE,
   &layer3
 };
 
 /* paddle 1 layer */
-Layer layer1 = {		                         /* Layer with a black rectangle */
+Layer layer1 = {		                         /* Layer with a white rectangle */
   (AbShape *)&pad,
   {((screenWidth/4)-20), screenHeight/2},                /* left edge center */
   {0,0}, {0,0},				                 /* last & next pos */
-  COLOR_BLACK,
+  COLOR_WHITE,
   &fieldLayer,
 };
 
 /* paddle 2 layer */
-Layer layer0 = {		                         /* Layer with a black rectabgle */
+Layer layer0 = {		                         /* Layer with a white rectangle */
   (AbShape *)&pad,
   {(screenWidth/2)+52, screenHeight/2},                  /* right edge center */
   {0,0}, {0,0},				                 /* last & next pos */
-  COLOR_BLACK,
+  COLOR_WHITE,
   &layer1,
 };
 
@@ -168,6 +168,30 @@ void mlAdvance(MovLayer *ml, Region *fence)
   } /**< for ml */
 }
 
+/* to detect collision against paddle 1 */
+void p1collision()
+{
+  if((layer3.pos.axes[0] - (circle8.radius) <= (layer1.pos.axes[0] + 1)) && (layer3.pos.axes[1] >= layer1.pos.axes[1] - 12) && (layer3.pos.axes[1] <= layer1.pos.axes[1] + 12))
+    {
+      layer3.posNext.axes[0] += 3;
+      ml3.velocity.axes[0] = -ml3.velocity.axes[0];
+      set_pd(2000);
+      buzzer = 1;
+    }
+}
+
+/* to detect collision against paddle 2 */
+void p2collison()
+{
+  if((layer3.pos.axes[0] + (circle8.radius) >= (layer0.pos.axes[0] - 3)) && layer0.pos.axes[1] -12) && (layer3.pos.axes[1] <= layer0.pos.axes[1] + 12))
+  {
+    layer3.posNext.axes[0] -= 3;
+    ml3.velocity.axes[0] = -ml3.velocity.axes[0];
+    set_pd(2000);
+    buzzer = 1;
+  }
+}
+
 /* switch update for player 1 paddle */
 void p1sw(u_int sw)
 {
@@ -202,7 +226,7 @@ void p2sw(u_int sw)
     }
 }
 
-u_int bgColor = COLOR_WHITE;     /**< The background color */
+u_int bgColor = COLOR_BLACK;     /**< The background color */
 int redrawScreen = 1;            /**< Boolean for whether screen needs to be redrawn */
 
 Region fieldFence;		/**< fence around playing field  */
@@ -219,28 +243,56 @@ void main()
   configureClocks();
   lcd_init();
   shapeInit();
-  p2sw_init(1);
+  p2sw_init(15);
 
   shapeInit();
+
+  init_noise();               /* initialize buzzer for sound */
 
   layerInit(&layer0);
   layerDraw(&layer0);
 
 
   layerGetBounds(&fieldLayer, &fieldFence);
+  drawScore(p1, 1);
+  drawScore(p2, 90);
 
 
   enableWDTInterrupts();      /**< enable periodic interrupt */
   or_sr(0x8);	              /**< GIE (enable interrupts) */
 
 
-  for(;;) { 
+  u_int swt;
+
+  for(;;) {
+
+    if(score1 == 10 || score2 == 10)
+      {
+	continue;
+      }
+
+    swt = p2sw_read();
+    
     while (!redrawScreen) { /**< Pause CPU if screen doesn't need updating */
       P1OUT &= ~GREEN_LED;    /**< Green led off witHo CPU */
       or_sr(0x10);	      /**< CPU OFF */
     }
+
+    if(buzzer)
+      {
+	set_pd(0);
+	buzzer = 0;
+      }
+    
     P1OUT |= GREEN_LED;       /**< Green led on when CPU on */
     redrawScreen = 0;
+
+    p1sw(swt);               /* update paddle 1 */
+    p2sw(swt);               /* update paddle 2 */
+
+    p1collision();           /* checking for paddle 1 collison with ball */
+    p2collision();           /* checking for paddle 2 collison with ball */
+    
     movLayerDraw(&ml0, &layer0);
   }
 }
