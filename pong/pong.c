@@ -27,36 +27,36 @@ AbRectOutline fieldOutline = {	                         /* playing field */
 
 
 /* ball layer */
-Layer layer3 = {		            /* Layer with a green circle */
+Layer layer3 = {		                         /* Layer with a green circle */
   (AbShape *)&circle8,
-  {(screenWidth/2)+10, (screenHeight/2)+5}, /* bit below & right of center */
-  {0,0}, {0,0},				    /* last & next pos */
+  {(screenWidth/2)+10, (screenHeight/2)+5},              /* bit below & right of center */
+  {0,0}, {0,0},				                 /* last & next pos */
   COLOR_GREEN,
   0
 };
 
-Layer fieldLayer = {		            /* playing field as a layer */
+Layer fieldLayer = {		                         /* playing field as a layer */
   (AbShape *) &fieldOutline,
-  {screenWidth/2, screenHeight/2},          /* center */
-  {0,0}, {0,0},				    /* last & next pos */
+  {screenWidth/2, screenHeight/2},                       /* center */
+  {0,0}, {0,0},				                 /* last & next pos */
   COLOR_BLACK,
   &layer3
 };
 
 /* paddle 1 layer */
-Layer layer1 = {		            /* Layer with a black rectangle */
+Layer layer1 = {		                         /* Layer with a black rectangle */
   (AbShape *)&pad,
-  {((screenWidth/4)-20), screenHeight/2},   /* left edge center */
-  {0,0}, {0,0},				    /* last & next pos */
+  {((screenWidth/4)-20), screenHeight/2},                /* left edge center */
+  {0,0}, {0,0},				                 /* last & next pos */
   COLOR_BLACK,
   &fieldLayer,
 };
 
 /* paddle 2 layer */
-Layer layer0 = {		            /* Layer with a black rectabgle */
+Layer layer0 = {		                         /* Layer with a black rectabgle */
   (AbShape *)&pad,
-  {(screenWidth/2)+52, screenHeight/2},    /* right edge center */
-  {0,0}, {0,0},				    /* last & next pos */
+  {(screenWidth/2)+52, screenHeight/2},                  /* right edge center */
+  {0,0}, {0,0},				                 /* last & next pos */
   COLOR_BLACK,
   &layer1,
 };
@@ -72,9 +72,9 @@ typedef struct MovLayer_s {
 } MovLayer;
 
 /* initial value of {0,0} will be overwritten */
-MovLayer ml3 = { &layer3, {1,1}, 0 };        /* updates ball movements */
-MovLayer ml1 = { &layer1, {0,1}, &ml3 };     /* updates paddle 1 horizontal */
-MovLayer ml0 = { &layer0, {0,1}, &ml1 };     /* updates paddle 2 horizontal */
+MovLayer ml3 = { &layer3, {1,1}, 0 };            /* updates ball movements */
+MovLayer ml1 = { &layer1, {0,1}, &ml3 };         /* updates paddle 1 horizontal */
+MovLayer ml0 = { &layer0, {0,1}, &ml1 };         /* updates paddle 2 horizontal */
 
 void movLayerDraw(MovLayer *movLayers, Layer *layers)
 {
@@ -113,8 +113,21 @@ void movLayerDraw(MovLayer *movLayers, Layer *layers)
   } // for moving layer being updated
 }	  
 
-
 //Region fence = {{10,30}, {SHORT_EDGE_PIXELS-10, LONG_EDGE_PIXELS-10}}; /**< Create a fence region */
+
+
+/* 2 strings to store each score */
+char p1[10] = "P1";
+char p2[10] = "P2";
+char score1 = 0;
+char score2 = 0;
+
+/* draws scores on screen */
+void drawScore(char *score, char size)
+{
+  drawStrings5x7(size, 14, score, COLOR_BLACK, COLOR_WHITE);
+}
+
 
 /** Advances a moving shape within a fence
  *  
@@ -136,22 +149,27 @@ void mlAdvance(MovLayer *ml, Region *fence)
 	newPos.axes[axis] += (2*velocity);
       }	/**< if outside of fence */
     } /**< for axis */
+
+    /* to update score when hitting fence */
+    if(shapeBoundary.topLeft.axes[0] < fence->topLeft.axes[0])
+      {
+	score1++;
+	p1[2] = '0' + score1;
+	drawScore(p1,1);
+      }
+    else if(shapeBoundary.botRight.axes[0] > fence->botRight.axes[0])
+      {
+	score2++;
+	p2[2] = '0' + score2;
+	drawScore(p2,90);
+      }
+    
     ml->layer->posNext = newPos;
   } /**< for ml */
 }
 
-/* 2 strings to store each score */
-char p1[10] = "p1";
-char p2[10] = "p2";
-
-void drawScore(char *score, char size)
-{
-    drawStrings5x7(size, 14, score, COLOR_BLACK, COLOR_WHITE);
-}
-
-
-u_int bgColor = COLOR_BLUE;     /**< The background color */
-int redrawScreen = 1;           /**< Boolean for whether screen needs to be redrawn */
+u_int bgColor = COLOR_WHITE;     /**< The background color */
+int redrawScreen = 1;            /**< Boolean for whether screen needs to be redrawn */
 
 Region fieldFence;		/**< fence around playing field  */
 
