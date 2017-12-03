@@ -1,4 +1,4 @@
-/** \file shapemotion.c
+/** \file pong.c
  *  \brief This is a simple shape motion demo.
  *  This demo creates two layers containing shapes.
  *  One layer contains a rectangle and the other a circle.
@@ -17,53 +17,47 @@
 #define GREEN_LED BIT6
 
 
-AbRect rect10 = {abRectGetBounds, abRectCheck, {10,10}}; /**< 10x10 rectangle */
-AbRArrow rightArrow = {abRArrowGetBounds, abRArrowCheck, 30};
+AbRect rect10 = {abRectGetBounds, abRectCheck, {10,10}}; /* 10x10 rectangle */
+AbRect pad = {abRectGetBounds, abRectCheck, {2,20}};     /* 2x20 paddle */
 
-AbRectOutline fieldOutline = {	/* playing field */
+AbRectOutline fieldOutline = {	                         /* playing field */
   abRectOutlineGetBounds, abRectOutlineCheck,   
   {screenWidth/2 - 10, screenHeight/2 - 10}
 };
 
-Layer layer4 = {
-  (AbShape *)&rightArrow,
-  {(screenWidth/2)+10, (screenHeight/2)+5}, /**< bit below & right of center */
+
+/* ball layer */
+Layer layer3 = {		            /* Layer with a green circle */
+  (AbShape *)&circle8,
+  {(screenWidth/2)+10, (screenHeight/2)+5}, /* bit below & right of center */
   {0,0}, {0,0},				    /* last & next pos */
-  COLOR_PINK,
+  COLOR_GREEN,
   0
 };
-  
 
-Layer layer3 = {		/**< Layer with an orange circle */
-  (AbShape *)&circle8,
-  {(screenWidth/2)+10, (screenHeight/2)+5}, /**< bit below & right of center */
-  {0,0}, {0,0},				    /* last & next pos */
-  COLOR_VIOLET,
-  &layer4,
-};
-
-
-Layer fieldLayer = {		/* playing field as a layer */
+Layer fieldLayer = {		            /* playing field as a layer */
   (AbShape *) &fieldOutline,
-  {screenWidth/2, screenHeight/2},/**< center */
+  {screenWidth/2, screenHeight/2},          /* center */
   {0,0}, {0,0},				    /* last & next pos */
   COLOR_BLACK,
   &layer3
 };
 
-Layer layer1 = {		/**< Layer with a red square */
-  (AbShape *)&rect10,
-  {screenWidth/2, screenHeight/2}, /**< center */
+/* paddle 1 layer */
+Layer layer1 = {		            /* Layer with a black rectangle */
+  (AbShape *)&pad,
+  {((screenWidth/4)-20), screenHeight/2},   /* left edge center */
   {0,0}, {0,0},				    /* last & next pos */
-  COLOR_RED,
+  COLOR_BLACK,
   &fieldLayer,
 };
 
-Layer layer0 = {		/**< Layer with an orange circle */
-  (AbShape *)&circle14,
-  {(screenWidth/2)+10, (screenHeight/2)+5}, /**< bit below & right of center */
+/* paddle 2 layer */
+Layer layer0 = {		            /* Layer with a black rectabgle */
+  (AbShape *)&pad,
+  {(screenWidth/2)+52, screenHeight/2},    /* right edge center */
   {0,0}, {0,0},				    /* last & next pos */
-  COLOR_ORANGE,
+  COLOR_BLACK,
   &layer1,
 };
 
@@ -78,22 +72,22 @@ typedef struct MovLayer_s {
 } MovLayer;
 
 /* initial value of {0,0} will be overwritten */
-MovLayer ml3 = { &layer3, {1,1}, 0 }; /**< not all layers move */
-MovLayer ml1 = { &layer1, {1,2}, &ml3 }; 
-MovLayer ml0 = { &layer0, {2,1}, &ml1 }; 
+MovLayer ml3 = { &layer3, {1,1}, 0 };        /* updates ball movements */
+MovLayer ml1 = { &layer1, {0,1}, &ml3 };     /* updates paddle 1 horizontal */
+MovLayer ml0 = { &layer0, {0,1}, &ml1 };     /* updates paddle 2 horizontal */
 
 void movLayerDraw(MovLayer *movLayers, Layer *layers)
 {
   int row, col;
   MovLayer *movLayer;
 
-  and_sr(~8);			/**< disable interrupts (GIE off) */
+  and_sr(~8);			            /* disable interrupts (GIE off) */
   for (movLayer = movLayers; movLayer; movLayer = movLayer->next) { /* for each moving layer */
     Layer *l = movLayer->layer;
     l->posLast = l->pos;
     l->pos = l->posNext;
   }
-  or_sr(8);			/**< disable interrupts (GIE on) */
+  or_sr(8);			            /* disable interrupts (GIE on) */
 
 
   for (movLayer = movLayers; movLayer; movLayer = movLayer->next) { /* for each moving layer */
@@ -120,7 +114,6 @@ void movLayerDraw(MovLayer *movLayers, Layer *layers)
 }	  
 
 
-
 //Region fence = {{10,30}, {SHORT_EDGE_PIXELS-10, LONG_EDGE_PIXELS-10}}; /**< Create a fence region */
 
 /** Advances a moving shape within a fence
@@ -145,6 +138,15 @@ void mlAdvance(MovLayer *ml, Region *fence)
     } /**< for axis */
     ml->layer->posNext = newPos;
   } /**< for ml */
+}
+
+/* 2 strings to store each score */
+char p1[10] = "p1";
+char p2[10] = "p2";
+
+void drawScore(char *score, char size)
+{
+    drawStrings5x7(size, 14, score, COLOR_BLACK, COLOR_WHITE);
 }
 
 
