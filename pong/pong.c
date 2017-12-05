@@ -120,16 +120,10 @@ void movLayerDraw(MovLayer *movLayers, Layer *layers)
 
 
 /* 2 strings to store each score */
-char p1[10] = "P1";
-char p2[10] = "P2";
+char p1[] = "Player1:0";
+char p2[] = "Player2:0";
 char score1 = 0;
 char score2 = 0;
-
-/* draws scores on screen */
-void drawScore(char *score, char size)
-{
-  drawString5x7(size, 14, score, COLOR_BLACK, COLOR_WHITE);
-}
 
 
 /** Advances a moving shape within a fence
@@ -153,19 +147,39 @@ void mlAdvance(MovLayer *ml, Region *fence)
       }	/**< if outside of fence */
     } /**< for axis */
 
+
     /* to update score when hitting fence */
     if(shapeBoundary.topLeft.axes[0] < fence->topLeft.axes[0])
       {
-	score1++;
-	p1[2] = '0' + score1;
-	drawScore(p1,1);
+	score2++;
+        p2[8] = '0' + score2;
+	if(p2[8] < '5')
+	  {
+	    drawString5x7((screenWidth/2) + 8, 0, p2, COLOR_WHITE, COLOR_BLACK);
+	    set_pd(4000);
+	    buzzer = 1;
+	  }
+	else
+	  {
+	    drawString5x7((screenWidth/2) + 8, 0, "Player 2 Wins!", COLOR_RED, COLOR_BLACK);
+	  }
       }
     else if(shapeBoundary.botRight.axes[0] > fence->botRight.axes[0])
       {
-	score2++;
-	p2[2] = '0' + score2;
-	drawScore(p2,90);
+	score1++;
+        p1[8] = '0' + score1;
+	if(p1[8] < '5')
+	  {
+	    drawString5x7(0, 0, p1, COLOR_WHITE, COLOR_BLACK);
+	    set_pd(4000);
+	    buzzer = 1;
+	  }
+	else
+	  {
+	    drawString5x7(0, 0, "Player 1 Wins!", COLOR_RED, COLOR_BLACK);
+	  }
       }
+
     
     ml->layer->posNext = newPos;
   } /**< for ml */
@@ -193,27 +207,6 @@ void p2collision()
     set_pd(2000);
     buzzer = 1;
   }
-}
-
-/* to detect fence collision */
-void fcollision()
-{
-  if((layer3.pos.axes[0] - circle8.radius) < 4)
-    {
-      layer3.posNext.axes[0] = (screenWidth/2);
-      layer3.posNext.axes[1] = (screenHeight/2);
-      ml3.velocity.axes[0] = ml3.velocity.axes[1] = 0;
-      set_pd(7000);
-      buzzer = 1;
-    }
-  else if((layer3.pos.axes[0] + circle8.radius) > (screenWidth - 4))
-    {
-      layer3.posNext.axes[0] = (screenWidth/2);
-      layer3.posNext.axes[1] = (screenHeight/2);
-      ml3.velocity.axes[0] = ml3.velocity.axes[1] = 0;
-      set_pd(7000);
-      buzzer = 1;
-    }
 }
 
 /* switch update for player 1 paddle */
@@ -250,6 +243,11 @@ void p2sw(u_int sw)
     }
 }
 
+/* to update score when hitting fence */
+void fcollision()
+{
+}
+
 u_int bgColor = COLOR_BLACK;     /**< The background color */
 int redrawScreen = 1;            /**< Boolean for whether screen needs to be redrawn */
 
@@ -278,22 +276,18 @@ void main()
 
 
   layerGetBounds(&fieldLayer, &fieldFence);
-  drawScore(p1, 1);
-  drawScore(p2, 90);
 
 
   enableWDTInterrupts();      /**< enable periodic interrupt */
   or_sr(0x8);	              /**< GIE (enable interrupts) */
 
 
+  drawString5x7(0, 0, p1, COLOR_WHITE, COLOR_BLACK);
+  drawString5x7((screenWidth/2) + 8, 0, p2, COLOR_WHITE, COLOR_BLACK);
+
   u_int swt;
 
   for(;;) {
-
-    if(score1 == 10 || score2 == 10)
-      {
-	continue;
-      }
 
     swt = p2sw_read();
     
@@ -303,10 +297,10 @@ void main()
     }
 
     if(buzzer)
-      {
-	set_pd(0);
-	buzzer = 0;
-      }
+    {
+      set_pd(0);
+      buzzer = 0;
+    }
     
     P1OUT |= GREEN_LED;       /**< Green led on when CPU on */
     redrawScreen = 0;
@@ -316,8 +310,14 @@ void main()
 
     p1collision();           /* checking for paddle 1 collison with ball */
     p2collision();           /* checking for paddle 2 collison with ball */
+    //fcollision();
     
     movLayerDraw(&ml0, &layer0);
+    
+    if(score1 == 5 || score2 == 5)
+      {
+	break;
+      }
   }
 }
 
@@ -327,7 +327,7 @@ void wdt_c_handler()
   static short count = 0;
   P1OUT |= GREEN_LED;		      /**< Green LED on when cpu on */
   count ++;
-  if (count == 15) {
+  if (count == 8) {
     mlAdvance(&ml0, &fieldFence);
     if (p2sw_read())
       redrawScreen = 1;
