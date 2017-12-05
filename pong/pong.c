@@ -195,6 +195,27 @@ void p2collision()
   }
 }
 
+/* to detect fence collision */
+void fcollision()
+{
+  if((layer3.pos.axes[0] - circle8.radius) < 4)
+    {
+      layer3.posNext.axes[0] = (screenWidth/2);
+      layer3.posNext.axes[1] = (screenHeight/2);
+      ml3.velocity.axes[0] = ml3.velocity.axes[1] = 0;
+      set_pd(7000);
+      buzzer = 1;
+    }
+  else if((layer3.pos.axes[0] + circle8.radius) > (screenWidth - 4))
+    {
+      layer3.posNext.axes[0] = (screenWidth/2);
+      layer3.posNext.axes[1] = (screenHeight/2);
+      ml3.velocity.axes[0] = ml3.velocity.axes[1] = 0;
+      set_pd(7000);
+      buzzer = 1;
+    }
+}
+
 /* switch update for player 1 paddle */
 void p1sw(u_int sw)
 {
